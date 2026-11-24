@@ -440,7 +440,9 @@ def executar(argv: list[str], saida=print) -> int:
         h = r.resolver(a.id)
         st = {"suspender": f.Status.SUSPENSA, "revogar": f.Status.REVOGADA,
               "reativar": f.Status.ATIVA}[a.cmd]
-        r.mudar_status(h, st, a.mensagem)
+        # Reativar limpa a mensagem de bloqueio, salvo se outra for informada.
+        msg = "" if (a.cmd == "reativar" and a.mensagem is None) else a.mensagem
+        r.mudar_status(h, st, msg)
         saida(f"{h[:10]}: {st.value}")
     elif a.cmd == "mensagem":
         r.definir_mensagem(r.resolver(a.id), a.texto)
