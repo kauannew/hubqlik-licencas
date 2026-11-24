@@ -344,7 +344,7 @@ def _linha(h: str, lic: dict, priv: dict) -> str:
     return (f"{h[:10]}  {priv.get('final', '????')}  {lic['status']:<12} "
             f"{(lic.get('expira_em') or '-')[:10]}  {lic.get('plano', ''):<8} "
             f"tenants={len(lic['tenants'])} disp={len(lic['dispositivos'])}/"
-            f"{lic['max_dispositivos'] or '∞'}  {priv.get('cliente', '(sem cadastro)')}")
+            f"{lic['max_dispositivos'] or 'sem limite'}  {priv.get('cliente', '(sem cadastro)')}")
 
 
 def montar_parser() -> argparse.ArgumentParser:
@@ -470,6 +470,12 @@ def executar(argv: list[str], saida=print) -> int:
 
 
 def main() -> int:
+    # Console do Windows (cp1252): não quebrar por causa de um caractere.
+    for fluxo in (sys.stdout, sys.stderr):
+        try:
+            fluxo.reconfigure(errors="replace")
+        except AttributeError:
+            pass
     try:
         return executar(sys.argv[1:])
     except (ErroAdmin, f.ErroFormato, f.ErroAssinatura, f.ErroChave) as e:
