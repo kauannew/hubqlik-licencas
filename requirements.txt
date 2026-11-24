@@ -1,0 +1,2 @@
+# Só a CLI administrativa e os testes.
+pynacl==1.6.2

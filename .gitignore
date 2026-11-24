@@ -1,0 +1,10 @@
+# Cadastro de clientes e log de eventos: dados pessoais, NUNCA publicar.
+privado/
+# Chaves privadas (devem ficar fora do repositório; isto é só uma rede de segurança).
+*_ed25519.json
+*.pem
+*.key
+.env
+__pycache__/
+*.py[cod]
+*.tmp
