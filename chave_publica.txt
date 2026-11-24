@@ -1,0 +1,2 @@
+# Chave pública Ed25519 do produto hubqlik (kid e3fdb702fb75cd7d)
+L+6RzTXPWX1K3xb9l56tVUzIKmYyrjhrKkRzQvQKK/Q=
