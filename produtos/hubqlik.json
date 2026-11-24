@@ -2,6 +2,6 @@
   "formato": 1,
   "alg": "Ed25519",
   "kid": "e3fdb702fb75cd7d",
-  "dados": "{\"emitido_em\":\"2026-11-24T21:39:21Z\",\"licencas\":{\"8c4cf20570a58677de166704990f48b6d0ba397c3ebdadf0077d9a145375b214\":{\"dispositivos\":[],\"expira_em\":\"2026-12-24T23:59:59Z\",\"max_dispositivos\":0,\"mensagem\":\"\",\"plano\":\"teste\",\"status\":\"active\",\"tenants\":[],\"tolerancia_dias\":3}},\"produto\":\"hubqlik\",\"schema\":1,\"serial\":1}",
-  "assinatura": "kz5aA4d4c4+FRqmbsj19X/dcHM6aAKIlBNFEScxLg0mADG0P5n+RY5IZqkzZxlwUIG4efriF9/xPaHzuHIV9Bw=="
+  "dados": "{\"emitido_em\":\"2026-11-24T22:11:36Z\",\"licencas\":{\"8c4cf20570a58677de166704990f48b6d0ba397c3ebdadf0077d9a145375b214\":{\"dispositivos\":[],\"expira_em\":\"2026-12-24T23:59:59Z\",\"max_dispositivos\":0,\"mensagem\":\"Contrato Finalizado. Entrar em contato com o Financeiro-Data Priority\",\"plano\":\"teste\",\"status\":\"suspended\",\"tenants\":[],\"tolerancia_dias\":3}},\"produto\":\"hubqlik\",\"schema\":1,\"serial\":2}",
+  "assinatura": "/5GSuA3AHPz5EAiCXE3Grwc8oknGVTtmV3/Ept0JfEnbEBbJ7NxhWIqnv41USoujX/36NuO24ZofK9U540sJCQ=="
 }
