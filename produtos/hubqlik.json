@@ -2,6 +2,6 @@
   "formato": 1,
   "alg": "Ed25519",
   "kid": "e3fdb702fb75cd7d",
-  "dados": "{\"emitido_em\":\"2026-11-25T11:25:35Z\",\"licencas\":{\"8c4cf20570a58677de166704990f48b6d0ba397c3ebdadf0077d9a145375b214\":{\"dispositivos\":[],\"expira_em\":\"2026-12-24T23:59:59Z\",\"max_dispositivos\":1,\"mensagem\":\"Contrato Finalizado. Entrar em contato com o Financeiro-Data Priority\",\"plano\":\"teste\",\"status\":\"suspended\",\"tenants\":[\"8f2fa4ce9a6abb5ecfd29f4bfa522f541d16958ca74ae6e9084ca1019cd3e2bf\"],\"tolerancia_dias\":3}},\"produto\":\"hubqlik\",\"schema\":1,\"serial\":4}",
-  "assinatura": "6CvICs9ZuSQikwo7qOGq9myST1f0u/yAz2VggaCJ5c01BZuSD/NtquLcg7CxsZUk89wy6Z1a48RB53LX1aAlCA=="
+  "dados": "{\"emitido_em\":\"2026-11-25T11:27:48Z\",\"licencas\":{\"8c4cf20570a58677de166704990f48b6d0ba397c3ebdadf0077d9a145375b214\":{\"dispositivos\":[],\"expira_em\":\"2026-12-24T23:59:59Z\",\"max_dispositivos\":1,\"mensagem\":\"\",\"plano\":\"teste\",\"status\":\"active\",\"tenants\":[\"8f2fa4ce9a6abb5ecfd29f4bfa522f541d16958ca74ae6e9084ca1019cd3e2bf\"],\"tolerancia_dias\":3}},\"produto\":\"hubqlik\",\"schema\":1,\"serial\":5}",
+  "assinatura": "VutqidqxPW9uon1x+rW6yXzVylnrRrQLZ61439hUTqh/ZhBdrMJaVPPkZnCPUBBVQeT15MfjZF55TL6eGgbYDA=="
 }
