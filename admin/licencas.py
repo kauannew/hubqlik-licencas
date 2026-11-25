@@ -39,7 +39,7 @@ import nacl.pwhash
 import nacl.secret
 import nacl.utils
 from nacl.exceptions import CryptoError
-from nacl.signing import SigningKey
+from nacl.signing import SigningKey, VerifyKey
 
 from . import formato as f
 
@@ -103,6 +103,16 @@ def carregar_chave_privada(caminho: Path, senha: str | None = None) -> SigningKe
     return sk
 
 
+def ler_chaves_publicas(raiz: Path) -> list[VerifyKey]:
+    """Chaves públicas de chave_publica.txt (linhas com # são comentários)."""
+    arq = raiz / "chave_publica.txt"
+    if not arq.exists():
+        return []
+    linhas = [l.strip() for l in arq.read_text(encoding="utf-8").splitlines()
+              if l.strip() and not l.strip().startswith("#")]
+    return [f.chave_publica_de_b64(l) for l in linhas]
+
+
 # ------------------------------------------------------------------ datas
 def somar_meses(d: datetime, meses: int) -> datetime:
     m = d.month - 1 + meses
@@ -122,10 +132,14 @@ def fim_do_dia(data: str) -> datetime:
 # ------------------------------------------------------------ repositório
 @dataclass
 class Repositorio:
-    """Arquivo público + cadastro privado de um produto."""
+    """Arquivo público + cadastro privado de um produto.
+
+    Sem `chave` (privada) o repositório abre só para leitura: confere a
+    assinatura com as chaves de chave_publica.txt. Gravar exige `desbloquear`.
+    """
     raiz: Path
     produto: str
-    chave: SigningKey
+    chave: SigningKey | None = None
     agora: Callable[[], datetime] = f.agora_utc
     dados: dict = field(init=False)
     privado: dict = field(init=False)
@@ -147,9 +161,27 @@ class Repositorio:
         return self.pasta_privada / f"{self.produto}_eventos.jsonl"
 
     def __post_init__(self):
+        self.recarregar()
+
+    @property
+    def desbloqueado(self) -> bool:
+        return self.chave is not None
+
+    def desbloquear(self, chave: SigningKey) -> None:
+        """Passa a gravar com esta chave; recusa chave que o app não conhece."""
+        publicas = ler_chaves_publicas(self.raiz)
+        if publicas and f.kid(chave.verify_key) not in {f.kid(c) for c in publicas}:
+            raise ErroAdmin("Esta chave privada não corresponde a chave_publica.txt.")
+        self.chave = chave
+
+    def bloquear(self) -> None:
+        self.chave = None
+
+    def recarregar(self) -> None:
+        """Lê de novo o arquivo público e o cadastro privado do disco."""
         if self.arquivo.exists():
-            self.dados = f.abrir_envelope(self.arquivo.read_bytes(), [self.chave.verify_key],
-                                          self.produto)
+            chaves = ([self.chave.verify_key] if self.chave else [])                 + ler_chaves_publicas(self.raiz)
+            self.dados = f.abrir_envelope(self.arquivo.read_bytes(), chaves, self.produto)
         else:
             self.dados = {"schema": f.SCHEMA, "produto": self.produto, "serial": 0,
                           "emitido_em": f.para_iso(self.agora()), "licencas": {}}
@@ -187,6 +219,8 @@ class Repositorio:
             fp.write(json.dumps(reg, ensure_ascii=False) + "\n")
 
     def salvar(self) -> None:
+        if self.chave is None:
+            raise ErroAdmin("Chave privada bloqueada: desbloqueie para gravar.")
         self.dados["serial"] += 1
         self.dados["emitido_em"] = f.para_iso(self.agora())
         conteudo = f.montar_envelope(self.dados, self.chave)
@@ -198,6 +232,10 @@ class Repositorio:
         tmp = self.arquivo.with_suffix(".tmp")
         tmp.write_bytes(conteudo)
         os.replace(tmp, self.arquivo)
+        self.salvar_privado()
+
+    def salvar_privado(self) -> None:
+        """Grava só o cadastro privado (não muda o arquivo público nem o serial)."""
         self.pasta_privada.mkdir(parents=True, exist_ok=True)
         tmp = self.arquivo_privado.with_suffix(".tmp")
         tmp.write_text(json.dumps(self.privado, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -246,6 +284,17 @@ class Repositorio:
         self.evento("criar", h, plano=plano, status=status.value)
         self.salvar()
         return chave, h
+
+    def editar_cadastro(self, h: str, cliente: str | None = None, contato: str | None = None,
+                        obs: str | None = None) -> None:
+        """Dados só do cadastro privado: não precisa de chave nem de publicar."""
+        self.lic(h)
+        priv = self.privado["licencas"].setdefault(h, {})
+        for campo, valor in (("cliente", cliente), ("contato", contato), ("observacoes", obs)):
+            if valor is not None:
+                priv[campo] = valor.strip()
+        self.evento("cadastro", h)
+        self.salvar_privado()
 
     def renovar(self, h: str, expira=None, meses=None, dias=None) -> str:
         lic = self.lic(h)
@@ -328,7 +377,9 @@ class Repositorio:
 
 
 # -------------------------------------------------------------------- CLI
-def _repo(a) -> Repositorio:
+def _repo(a, leitura: bool = False) -> Repositorio:
+    if leitura:  # listar/mostrar: confere com a chave pública, sem pedir senha
+        return Repositorio(Path(a.raiz), a.produto)
     sk = carregar_chave_privada(Path(a.chave) if a.chave else caminho_chave_padrao(a.produto))
     return Repositorio(Path(a.raiz), a.produto, sk)
 
@@ -416,15 +467,12 @@ def executar(argv: list[str], saida=print) -> int:
         return 0
     if a.cmd == "validar":
         arq = Path(a.arquivo) if a.arquivo else raiz / "produtos" / f"{a.produto}.json"
-        linhas = [l.strip() for l in (raiz / "chave_publica.txt").read_text(
-            encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")]
-        dados = f.abrir_envelope(arq.read_bytes(), [f.chave_publica_de_b64(l) for l in linhas],
-                                 a.produto)
+        dados = f.abrir_envelope(arq.read_bytes(), ler_chaves_publicas(raiz), a.produto)
         saida(f"OK: {arq.name} serial {dados['serial']}, emitido em {dados['emitido_em']}, "
               f"{len(dados['licencas'])} licença(s).")
         return 0
 
-    r = _repo(a)
+    r = _repo(a, leitura=a.cmd in ("listar", "mostrar"))
     if a.cmd == "criar":
         if not a.tenant:
             saida("AVISO: licença sem tenant vale para qualquer tenant.")

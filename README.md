@@ -34,7 +34,28 @@ py -3.12 -m admin.licencas gerar-chaves
   emitir nem alterar licenças. Se ela vazar, gere outra, publique uma versão do app com a
   nova chave pública e reassine o arquivo.
 
-## Uso
+## Painel (interface gráfica)
+Dê dois cliques em `painel.bat` (ou `pyw -3.12 -m admin.painel`).
+
+- Lista as licenças com a **situação que o Hub do cliente vai ver**: ativa, vencendo (7 dias
+  ou menos), em tolerância, vencida, pendente, suspensa ou revogada. Tem busca por cliente,
+  contato, tenant ou final da chave, e filtros.
+- Ao selecionar uma licença, o painel da direita mostra os dados e as ações: renovar,
+  suspender com mensagem, reativar, mensagem, tenants, limite e autorização de
+  dispositivos, editar cadastro e revogar. Também mostra o histórico da licença.
+- **+ Nova licença** mostra a chave uma única vez, com o botão "Copiar chave".
+- **Publicar** faz commit só de `produtos/<produto>.json` e push. Enquanto houver
+  alteração não publicada, uma faixa amarela avisa: o cliente só vê a mudança depois
+  de publicar. **Atualizar do GitHub** (F5) faz `git pull`.
+- Abre **sem senha**, só para consulta: confere a assinatura com `chave_publica.txt`. A
+  senha da chave privada é pedida na primeira alteração. A chave fica só na memória e é
+  esquecida em "Bloquear chave", ao fechar o painel ou após 15 min sem alterações.
+- "Editar cadastro" (cliente, contato, observações) mexe só em `privado/`: não pede senha
+  nem publicação.
+
+As regras e a gravação são as mesmas da CLI (`admin/licencas.py`). O painel só chama a CLI.
+
+## Uso (linha de comando)
 ```
 py -3.12 -m admin.licencas criar --cliente "ACME" --contato "ti@acme" --tenant acme.us.qlikcloud.com --meses 1
 py -3.12 -m admin.licencas listar
@@ -48,6 +69,7 @@ py -3.12 -m admin.licencas dispositivo-adicionar 3fa9c1d2 ABCD-1A2B3-C4D5E-6F708
 py -3.12 -m admin.licencas mostrar final:ABCD
 py -3.12 -m admin.licencas validar
 ```
+- `listar` e `mostrar` não pedem senha (conferem com a chave pública).
 - O ID é o começo do hash da chave (coluna 1 do `listar`) ou `final:XXXX` (últimos 4 da
   chave, pelo cadastro privado).
 - `criar` mostra a chave **uma única vez**; só o hash é gravado.

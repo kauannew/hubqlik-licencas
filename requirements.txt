@@ -1,2 +1,4 @@
-# Só a CLI administrativa e os testes.
+# CLI administrativa, painel e testes.
 pynacl==1.6.2
+# Painel (interface gráfica): a mesma versão usada pelo Hub.
+customtkinter==6.0.0
