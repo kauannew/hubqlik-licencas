@@ -135,7 +135,7 @@ class RepositorioTest(unittest.TestCase):
         lic = d["licencas"][h]
         self.assertEqual(lic["status"], "active")
         self.assertEqual(lic["expira_em"], "2026-12-24T23:59:59Z")
-        self.assertEqual(lic["tolerancia_dias"], 3)
+        self.assertEqual(lic["tolerancia_dias"], 1)
         self.assertEqual(lic["tenants"], [f.hash_tenant("https://acme.us.qlikcloud.com")])
         # Nada pessoal nem a chave no arquivo público.
         texto = (self.raiz / "produtos/hubqlik.json").read_text(encoding="utf-8")

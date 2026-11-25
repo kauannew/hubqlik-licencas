@@ -438,9 +438,10 @@ class Painel(ctk.CTk):
         quadro = ctk.CTkFrame(esq, fg_color=SURFACE, corner_radius=12, border_color=BORDA,
                               border_width=1)
         quadro.pack(fill="both", expand=True)
-        colunas = (("cliente", "Cliente", 170, True), ("final", "Final", 58, False),
-                   ("situacao", "Situação", 118, False), ("vence", "Vence", 140, False),
-                   ("plano", "Plano", 74, False), ("tenants", "Tenants", 70, False),
+        colunas = (("cliente", "Cliente", 200, True), ("final", "Final", 58, False),
+                   ("situacao", "Situação", 118, False),
+                   ("vence", "Expiração do contrato", 170, False),
+                   ("tenants", "Tenants", 70, False),
                    ("disp", "Dispositivos", 96, False))
         self._tabela = ttk.Treeview(quadro, columns=[c[0] for c in colunas], show="headings",
                                     style="Painel.Treeview", selectmode="browse")
@@ -499,7 +500,7 @@ class Painel(ctk.CTk):
             else:
                 vence = f"{l.vence}  (há {-l.dias} d)"
             self._tabela.insert("", "end", iid=l.id, tags=(l.situacao,), values=(
-                l.cliente, l.final, "●  " + D.SITUACOES[l.situacao], vence, l.plano,
+                l.cliente, l.final, "●  " + D.SITUACOES[l.situacao], vence,
                 l.tenants or "qualquer", l.dispositivos))
         if not linhas:
             texto = ("Nenhuma licença ainda. Clique em \"+ Nova licença\"."
@@ -601,8 +602,7 @@ class Painel(ctk.CTk):
         self._par(sec, "Final da chave", final)
         self._par(sec, "ID", h[:10], copiar=h[:10])
         self._par(sec, "Status no arquivo", D.STATUS_ROTULO.get(st, st))
-        self._par(sec, "Plano", lic.get("plano") or "—")
-        self._par(sec, "Vence em", vence)
+        self._par(sec, "Expiração do contrato", vence)
         self._par(sec, "Tolerância", f"{lic.get('tolerancia_dias', 0)} dia(s) após vencer")
         self._par(sec, "Criada em", D.data_hora_br(priv.get("criada_em")))
 
@@ -817,7 +817,7 @@ class Painel(ctk.CTk):
                        if t.strip()]
             for t in tenants:
                 f.normalizar_tenant(t)  # valida antes de perguntar qualquer coisa
-            validade = D.converter_validade(*v["validade"])
+            validade = D.converter_data(v["expira"], self._agora())
             tol = D.inteiro(v["tolerancia"], "Tolerância")
             maxd = D.inteiro(v["max_dispositivos"], "Limite de dispositivos")
             if not tenants and not messagebox.askyesno(
@@ -827,7 +827,7 @@ class Painel(ctk.CTk):
                 raise L.ErroAdmin("Informe ao menos um tenant (um por linha).")
             chave, h = self._gravar(
                 "Cria licença", lambda: self.repo.criar(
-                    v["cliente"], tenants, v["plano"] or "mensal", tolerancia=tol,
+                    v["cliente"], tenants, "", tolerancia=tol,
                     max_dispositivos=maxd, mensagem=v["mensagem"], contato=v["contato"],
                     obs=v["obs"], pendente=v["pendente"], **validade))
             self.acoes[-1] = f"Cria licença {f.final_chave(chave)} ({v['cliente']})"
@@ -838,11 +838,9 @@ class Painel(ctk.CTk):
             Campo("contato", "Contato", dica="E-mail ou telefone do responsável."),
             Campo("tenants", "Tenants (um por linha)", "multilinha",
                   dica="Ex.: acme.us.qlikcloud.com. Vai publicado só como hash."),
-            Campo("plano", "Plano", "opcoes", "mensal", ("mensal", "trimestral", "anual",
-                                                         "teste")),
-            Campo("validade", "Validade", "validade", ("Meses", "1"),
-                  dica="Meses ou dias a partir de hoje, ou até uma data (dd/mm/aaaa)."),
-            Campo("tolerancia", "Tolerância após vencer (dias)", valor="3"),
+            Campo("expira", "Expiração do contrato *", valor=D.sugerir_data(self._agora()),
+                  dica="dd/mm/aaaa. A licença vale até o fim desse dia."),
+            Campo("tolerancia", "Tolerância após vencer (dias)", valor="1"),
             Campo("max_dispositivos", "Limite de computadores", valor="0",
                   dica="0 = sem limite. Com limite, cada computador precisa ser autorizado."),
             Campo("mensagem", "Mensagem para o cliente (opcional)"),
@@ -856,15 +854,15 @@ class Painel(ctk.CTk):
 
     def renovar(self, h):
         lic = self.repo.lic(h)
+        atual = f.de_iso(lic["expira_em"]) if lic.get("expira_em") else None
         self._formulario("Renovar licença", [
-            Campo("validade", "Somar à validade", "validade", ("Meses", "1"),
-                  dica="Meses ou dias contam a partir do vencimento atual (ou de hoje, se já "
-                       "venceu). \"Até a data\" define a data final."),
+            Campo("expira", "Nova expiração do contrato", valor=D.sugerir_data(
+                max(filter(None, [atual, self._agora()])))),
         ], lambda v: self._gravar(f"Renova licença {self._final(h)}",
                                   lambda: self.repo.renovar(
-                                      h, **D.converter_validade(*v["validade"]))),
+                                      h, **D.converter_data(v["expira"], self._agora()))),
             texto_ok="Renovar",
-            intro=f"Vence hoje em {D.data_br(lic.get('expira_em'))}.")
+            intro=f"Expiração atual do contrato: {D.data_br(lic.get('expira_em'))}.")
 
     def suspender(self, h):
         self._formulario("Suspender licença", [
@@ -1006,8 +1004,8 @@ class Painel(ctk.CTk):
             Campo("mensagem", "Mensagem do commit", valor=D.mensagem_commit(self.acoes)),
         ], confirmar, texto_ok="Publicar",
                 intro=f"Faz commit de {self.repo.arquivo.relative_to(self.repo.raiz).as_posix()} "
-                      "(só o arquivo público; o cadastro privado nunca vai) e push. Os clientes "
-                      "recebem em alguns minutos.").executar():
+                      "(só o arquivo público; o cadastro privado nunca vai) e push. O GitHub leva "
+                      "até 5 minutos para entregar o arquivo novo aos clientes.").executar():
             return
         self.status("Publicando…")
         self._b_publicar.configure(state="disabled")

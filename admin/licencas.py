@@ -254,7 +254,7 @@ class Repositorio:
 
     def criar(self, cliente: str, tenants: list[str], plano: str = "mensal",
               expira: str | None = None, meses: int | None = None, dias: int | None = None,
-              tolerancia: int = 3, max_dispositivos: int = 0, mensagem: str = "",
+              tolerancia: int = 1, max_dispositivos: int = 0, mensagem: str = "",
               contato: str = "", obs: str = "", pendente: bool = False) -> tuple[str, str]:
         """Cria a licença; devolve (chave em claro, hash). A chave não é guardada."""
         if tolerancia < 0 or max_dispositivos < 0:
@@ -414,7 +414,7 @@ def montar_parser() -> argparse.ArgumentParser:
     sp.add_argument("--tenant", action="append", default=[], help="URL do tenant (repita)")
     sp.add_argument("--plano", default="mensal")
     _validade(sp)
-    sp.add_argument("--tolerancia", type=int, default=3, help="dias após vencer (padrão 3)")
+    sp.add_argument("--tolerancia", type=int, default=1, help="dias após vencer (padrão 1)")
     sp.add_argument("--max-dispositivos", type=int, default=0, help="0 = sem limite")
     sp.add_argument("--mensagem", default="")
     sp.add_argument("--contato", default="")

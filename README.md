@@ -40,6 +40,8 @@ Dê dois cliques em `painel.bat` (ou `pyw -3.12 -m admin.painel`).
 - Lista as licenças com a **situação que o Hub do cliente vai ver**: ativa, vencendo (7 dias
   ou menos), em tolerância, vencida, pendente, suspensa ou revogada. Tem busca por cliente,
   contato, tenant ou final da chave, e filtros.
+- **+ Nova licença** pede a **expiração do contrato** (dd/mm/aaaa): a licença vale até o
+  fim desse dia. A tolerância padrão é de 1 dia. **Renovar** pede a nova data.
 - Ao selecionar uma licença, o painel da direita mostra os dados e as ações: renovar,
   suspender com mensagem, reativar, mensagem, tenants, limite e autorização de
   dispositivos, editar cadastro e revogar. Também mostra o histórico da licença.
@@ -57,7 +59,7 @@ As regras e a gravação são as mesmas da CLI (`admin/licencas.py`). O painel s
 
 ## Uso (linha de comando)
 ```
-py -3.12 -m admin.licencas criar --cliente "ACME" --contato "ti@acme" --tenant acme.us.qlikcloud.com --meses 1
+py -3.12 -m admin.licencas criar --cliente "ACME" --contato "ti@acme" --tenant acme.us.qlikcloud.com --expira 2026-12-31
 py -3.12 -m admin.licencas listar
 py -3.12 -m admin.licencas renovar 3fa9c1d2 --meses 1
 py -3.12 -m admin.licencas suspender 3fa9c1d2 --mensagem "Fale com o financeiro"

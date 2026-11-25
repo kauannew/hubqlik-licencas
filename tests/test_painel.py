@@ -88,6 +88,21 @@ class SituacaoTest(unittest.TestCase):
             with self.assertRaises(L.ErroAdmin):
                 D.converter_validade(tipo, valor)
 
+    def test_data_do_contrato(self):
+        self.assertEqual(D.converter_data("31/12/2026", AGORA), {"expira": "2026-12-31"})
+        with self.assertRaises(L.ErroAdmin):
+            D.converter_data("01/11/2026", AGORA)  # já passou
+        with self.assertRaises(L.ErroAdmin):
+            D.converter_data("", AGORA)
+        self.assertEqual(D.sugerir_data(AGORA), "24/12/2026")
+
+    def test_tolerancia_padrao(self):
+        raiz = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, raiz, True)
+        r = _repo_com_chave(raiz, SigningKey.generate())
+        _, h = r.criar("ACME", [], "", expira="2026-12-31")
+        self.assertEqual(r.lic(h)["tolerancia_dias"], 1)
+
     def test_mensagem_commit(self):
         self.assertEqual(D.mensagem_commit([]), "Atualiza licenças")
         self.assertEqual(D.mensagem_commit(["Suspende licença A8MZ"]), "Suspende licença A8MZ")

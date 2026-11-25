@@ -209,7 +209,8 @@ def publicar(repo: Repositorio, mensagem: str) -> str:
         _git(repo.raiz, "add", "--", rel)
         _git(repo.raiz, "commit", "-m", mensagem, "--", rel)
     _git(repo.raiz, "push", timeout=120)
-    return f"Publicado (serial {repo.dados['serial']})."
+    return (f"Publicado (serial {repo.dados['serial']}). O GitHub leva até 5 min para "
+            "entregar; depois disso, no Hub, clique em \"Tentar novamente\".")
 
 
 def atualizar(repo: Repositorio) -> str:
@@ -240,6 +241,19 @@ def inteiro(texto: str, nome: str, minimo: int = 0) -> int:
     if n < minimo:
         raise L.ErroAdmin(f"{nome}: mínimo {minimo}.")
     return n
+
+
+def converter_data(texto: str, agora: datetime) -> dict:
+    """Campo "Expiração do contrato" (dd/mm/aaaa) -> argumentos de criar/renovar."""
+    v = converter_validade("Até a data", texto)
+    if v["expira"] < agora.astimezone().strftime("%Y-%m-%d"):
+        raise L.ErroAdmin("A expiração do contrato já passou: use hoje ou uma data futura.")
+    return v
+
+
+def sugerir_data(base: datetime) -> str:
+    """Um mês depois de `base`, em dd/mm/aaaa (valor inicial do campo de data)."""
+    return L.somar_meses(base, 1).astimezone().strftime("%d/%m/%Y")
 
 
 def converter_validade(tipo: str, texto: str) -> dict:
